@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import * as d3 from 'd3';
-import PropTypes from 'prop-types';
 
 let dy = 162.5;
-let dx = 10;
+let dx = 12;
 let width = 800;
 let tree = d3.tree().nodeSize([dx, dy]);
 let gLink;
@@ -44,7 +43,11 @@ class Graph extends Component {
 
 		gLink = svg.append("g")
 			.attr("fill", "none")
-			.attr("stroke", "#555")
+			.attr("stroke", '#555555')
+			// .attr("stroke", (d) => {
+			// 	console.log(d);
+			// 	return '#cccccc';
+			// })
 			.attr("stroke-opacity", 0.4)
 			.attr("stroke-width", 1.5);
 
@@ -60,7 +63,7 @@ class Graph extends Component {
 		const nodes = root.descendants().reverse();
 		const links = root.links();
 
-		tree(root); // Compute the new tree layout
+		tree(root); // compute the new tree layout
 
 		let left = root;
 		let right = root;
@@ -81,7 +84,7 @@ class Graph extends Component {
 		const node = gNode.selectAll("g")
 			.data(nodes, d => d.id);
 
-		// Enter any new nodes at the parent's previous position.
+		// Enter any new nodes at the parent's previous position
 		const nodeEnter = node.enter().append("g")
 			.attr("transform", d => `translate(${source.y0},${source.x0})`)
 			.attr("fill-opacity", 0)
@@ -93,54 +96,73 @@ class Graph extends Component {
 
 		nodeEnter.append("circle")
 			.attr("r", 2.5)
-			.attr("fill", d => d._children ? "#555" : "#999")
+			.attr("fill", (d) => {
+				if (d.data.numObservations > 0) {
+					return d._children ? "#4286f4" : "#6ba1f9";
+				}
+				return d._children ? "#555555" : "#cccccc";
+			})
 			.attr("stroke-width", 10);
 
 		nodeEnter.append("text")
-			.attr("dy", "0.31em")
+			.attr("dy", "0.3em")
 			.attr("x", d => d._children ? -6 : 6)
 			.attr("text-anchor", d => d._children ? "end" : "start")
 			.text(d => d.data.name)
 			.clone(true).lower()
+			// .attr("class", (d) => {
+			// 	if (d.data.numObservations > 0) {
+			// 		return { color: "#4286f4" };
+			// 	}
+			// 	return { color: "#555555" };
+			// })
 			.attr("stroke-linejoin", "round")
 			.attr("stroke-width", 3)
 			.attr("stroke", "white");
 
-		// Transition nodes to their new position.
+		// Transition nodes to their new position
 		const nodeUpdate = node.merge(nodeEnter).transition(transition)
 			.attr("transform", d => `translate(${d.y},${d.x})`)
 			.attr("fill-opacity", 1)
 			.attr("stroke-opacity", 1);
 
-		// Transition exiting nodes to the parent's new position.
+		// Transition exiting nodes to the parent's new position
 		const nodeExit = node.exit().transition(transition).remove()
 			.attr("transform", d => `translate(${source.y},${source.x})`)
 			.attr("fill-opacity", 0)
 			.attr("stroke-opacity", 0);
 
-		// Update the links…
+		// Update the links
 		const link = gLink.selectAll("path")
-			.data(links, d => d.target.id);
+			.data(links, (d) => {
+				return d.target.id;
+			})
+			.attr('stroke', (d) => {
+				return d.target.data.numObservations > 0 ? '#4286f4' : '#555555';
+			});
 
-		// Enter any new links at the parent's previous position.
+		// Enter any new links at the parent's previous position
 		const linkEnter = link.enter().append("path")
 			.attr("d", d => {
 				const o = {x: source.x0, y: source.y0};
 				return diagonal({source: o, target: o});
+			})
+			.attr('stroke', (d) => {
+				return d.target.data.numObservations > 0 ? '#146dff' : '#555555';
 			});
 
-		// Transition links to their new position.
+		// Transition links to their new position
 		link.merge(linkEnter).transition(transition)
 			.attr("d", diagonal);
 
-		// Transition exiting nodes to the parent's new position.
+		// Transition exiting nodes to the parent's new position
 		link.exit().transition(transition).remove()
 			.attr("d", d => {
 				const o = {x: source.x, y: source.y};
 				return diagonal({source: o, target: o});
 			});
 
-		// Stash the old positions for transition.
+		// Stash the old positions for transition
 		root.eachBefore(d => {
 			d.x0 = d.x;
 			d.y0 = d.y;
@@ -151,10 +173,6 @@ class Graph extends Component {
 		return <div />;
 	}
 }
-// Graph.propTypes = {
-// 	kingdoms: PropTypes.array
-// };
-
 
 export default Graph;
 
