@@ -12,21 +12,25 @@ const recurseAppend = (sourceArray, dest, parent = "null") => {
 		return;
 	}
 	const currItem = sourceArray.shift();
+	let added = false;
 	dest.forEach((row, index) => {
 		if (row.id === currItem.id) {
 			if (sourceArray.length) {
 				recurseAppend(sourceArray, dest[index].children, currItem.name);
+				added = true;
 			}
-		} else {
-			dest.push({
-				name: currItem.preferred_common_name ? currItem.preferred_common_name : currItem.name,
-				id: currItem.id,
-				parent,
-				children: []
-			});
-			appendBranch(sourceArray, dest[dest.length-1].children, currItem.name);
 		}
 	});
+
+	if (!added) {
+		dest.push({
+			name: currItem.preferred_common_name ? currItem.preferred_common_name : currItem.name,
+			id: currItem.id,
+			parent,
+			children: []
+		});
+		appendBranch(sourceArray, dest[dest.length-1].children, currItem.name);
+	}
 };
 
 // Converts a flat array into a nested object
