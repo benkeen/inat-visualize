@@ -1,6 +1,6 @@
 section {
     padding: 20px;
-    font-size: 12px;
+    font-size: 11px;
     font-family: Arial;
 }
 
@@ -29,4 +29,21 @@ form {
 
 .table {
     float: left;
+}
+
+.node circle {
+     fill: #ffffff;
+     stroke: steelblue;
+     stroke-width: 3px;
+}
+
+.node text {
+    font: 11px sans-serif;
+/*    fill: #ffffff; */
+}
+
+.link {
+    fill: none;
+    stroke: #cccccc;
+    stroke-width: 2px;
 }

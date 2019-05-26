@@ -9,7 +9,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const baseUrl = 'https://api.inaturalist.org/v1';
 
 // 215211 - variable
-// - alfalfa looper
+// 201281 - american lappet moth
+// 143615
+// 213861
 
 app.get('/api/taxon', (req, res) => {
 	const observationId = req.query.id;

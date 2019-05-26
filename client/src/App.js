@@ -1,10 +1,53 @@
 import React, { Component } from 'react';
 import './App.css';
+import ComparisonGraph from './ComparisonGraph';
+// import data1 from './data1';
+// import data2 from './data2';
+
+
+// recurse through the destination tree and append the new taxonomy info. As soon as the tree starts to deviate
+// from an original path, add a new entry
+const recurseAppend = (sourceArray, dest, parent = "null") => {
+	if (!sourceArray.length) {
+		return;
+	}
+	const currItem = sourceArray.shift();
+	dest.forEach((row, index) => {
+		if (row.id === currItem.id) {
+			if (sourceArray.length) {
+				recurseAppend(sourceArray, dest[index].children, currItem.name);
+			}
+		} else {
+			dest.push({
+				name: currItem.preferred_common_name ? currItem.preferred_common_name : currItem.name,
+				id: currItem.id,
+				parent,
+				children: []
+			});
+			appendBranch(sourceArray, dest[dest.length-1].children, currItem.name);
+		}
+	});
+};
+
+// Converts a flat array into a nested object
+const appendBranch = (sourceArray, dest, parent = "null") => {
+	if (!sourceArray.length) {
+		return;
+	}
+	const currItem = sourceArray.shift();
+	dest.push({
+		name: currItem.preferred_common_name ? currItem.preferred_common_name : currItem.name,
+		id: currItem.id,
+		parent,
+		children: []
+	});
+	appendBranch(sourceArray, dest[0].children, currItem.name);
+};
+
 
 class App extends Component {
 	constructor (props) {
 		super(props);
-
 		this.search = this.search.bind(this);
 		this.onChangeObservationId = this.onChangeObservationId.bind(this);
 	}
@@ -12,23 +55,22 @@ class App extends Component {
 	state = {
 		taxonIds: [],
 		nextObservationId: '',
-		data: []
+		data: [],
+		treeData: null
 	};
 
 	callApi = async (observationId) => {
 		const response = await fetch(`/api/taxon?id=${observationId}`);
 		const body = await response.json();
-
 		if (response.status !== 200) {
 			throw Error(body.message);
 		}
-
 		return body;
 	};
 
 	getTables () {
 		return this.state.data.map((data, index) => (
-			<table class="table" key={index}>
+			<table className="table" key={index}>
 				<tbody>
 				{this.showTable(data)}
 				</tbody>
@@ -57,12 +99,25 @@ class App extends Component {
 		e.preventDefault();
 
 		this.setState((state) => {
-
 			this.callApi(this.state.nextObservationId)
 				.then(res => {
-					this.setState((state) => ({
-						data: [...state.data, res]
-					}));
+					this.setState((state) => {
+						let newTreeData = [];
+
+						if (state.treeData === null) {
+							appendBranch(res.ancestors, newTreeData);
+
+							console.log(res);
+						} else {
+							newTreeData = JSON.parse(JSON.stringify(state.treeData));
+							recurseAppend(res.ancestors, newTreeData);
+						}
+
+						return {
+							data: [...state.data, res],
+							treeData: newTreeData
+						};
+					});
 				})
 				.catch(err => console.log(err));
 
@@ -75,7 +130,7 @@ class App extends Component {
 
 	showSelectedPills () {
 		return this.state.taxonIds.map((taxonId) => (
-			<span className="pill">
+			<span className="pill" key={taxonId}>
 				{taxonId}
 				<span>x</span>
 			</span>
@@ -89,7 +144,14 @@ class App extends Component {
 	}
 
 	render () {
-		const { nextObservationId } = this.state;
+		const { nextObservationId, treeData, data } = this.state;
+
+		const treeDataObj = (data.length === 0) ? null : {
+			name: treeData[0].name,
+			children: treeData[0].children
+		};
+
+		console.log(treeDataObj);
 
 		return (
 			<section>
@@ -105,6 +167,8 @@ class App extends Component {
 				<hr size="1" />
 
 				{this.getTables()}
+
+				<ComparisonGraph data={treeDataObj} numItems={data.length} />
 			</section>
 		);
 	}
