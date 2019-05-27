@@ -16,9 +16,9 @@ import * as d3 from 'd3';
 // Set the dimensions and margins of the diagram
 var margin = {
 	top: 20,
-	right: 90,
+	right: 50,
 	bottom: 30,
-	left: 90
+	left: 50
 };
 var width = 1400 - margin.left - margin.right;
 var height = 500 - margin.top - margin.bottom;
@@ -68,12 +68,13 @@ let svg = null, i, duration, root, treemap, path;
 
 const itemWidth = 110;
 
+
 const update = function (source) {
 
 	// assigns the x and y position for the nodes
 	var treeData = treemap(root);
 
-	// Compute the new tree layout.
+	// Compute the new tree layout
 	var nodes = treeData.descendants(),
 		links = treeData.descendants().slice(1);
 
@@ -87,7 +88,7 @@ const update = function (source) {
 	var node = svg.selectAll('g.node')
 		.data(nodes, function(d) {return d.id || (d.id = ++i); });
 
-	// Enter any new modes at the parent's previous position.
+	// Enter any new modes at the parent's previous position
 	var nodeEnter = node.enter().append('g')
 		.attr('class', 'node')
 		.attr("transform", function(d) {
@@ -115,7 +116,7 @@ const update = function (source) {
 	// UPDATE
 	var nodeUpdate = nodeEnter.merge(node);
 
-	// Transition to the proper position for the node
+	// transition to the proper position for the node
 	nodeUpdate.transition()
 		.duration(duration)
 		.attr("transform", function(d) {
@@ -133,7 +134,7 @@ const update = function (source) {
 
 	// Remove any exiting nodes
 	var nodeExit = node.exit().transition()
-		.duration(duration)
+		.duration(0)
 		.attr("transform", function(d) {
 			return "translate(" + source.y + "," + source.x + ")";
 		})
@@ -247,22 +248,12 @@ class ComparisonGraph extends Component {
 		root.x0 = height / 2;
 		root.y0 = 0;
 
-		// collapse after the second level
-		//root.children.forEach(collapse);
-
 		update(root);
 	}
 
 	render() {
 		return (
-			<svg id="vis">
-				<defs>
-					<filter x="0" y="0" width="1" height="1" id="solid">
-						<feFlood floodColor="white" />
-						<feComposite in="SourceGraphic" operator="xor" />
-					</filter>
-				</defs>
-			</svg>
+			<svg id="vis" />
 		);
 	}
 }
