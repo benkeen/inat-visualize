@@ -20,7 +20,7 @@ var margin = {
 	bottom: 30,
 	left: 90
 };
-var width = 1200 - margin.left - margin.right;
+var width = 1400 - margin.left - margin.right;
 var height = 500 - margin.top - margin.bottom;
 
 // Collapse the node and all it's children
@@ -32,10 +32,41 @@ function collapse(d) {
 	}
 }
 
+function wrap(text, width) {
+	const offset = 15;
+
+	text.each(function() {
+		const currOffset = this.getAttribute('text-anchor') === 'end' ? -offset : offset;
+
+		var text = d3.select(this),
+			words = text.text().split(/\s+/).reverse(),
+			word,
+			line = [],
+			y = text.attr("y"),
+			tspan = text.text(null).append("tspan").attr("x", currOffset).attr("y", y).attr("dy", 3);
+
+		while (word = words.pop()) {
+			line.push(word);
+			tspan.text(line.join(" "));
+			if (tspan.node().getComputedTextLength() > width) {
+				line.pop();
+				tspan.text(line.join(" "));
+				line = [word];
+				tspan = text.append("tspan").attr("x", currOffset).attr("y", y).attr("dy", 10).text(word);
+			}
+		}
+
+		const height = this.getBBox().height;
+		console.log(height);
+		text.attr("y", -(height/2) + 6);
+	});
+}
+
 // -------------------------------------------------------------------\
 
 let svg = null, i, duration, root, treemap, path;
 
+const itemWidth = 110;
 
 const update = function (source) {
 
@@ -47,7 +78,7 @@ const update = function (source) {
 		links = treeData.descendants().slice(1);
 
 	// Normalize for fixed-depth.
-	nodes.forEach(function(d){ d.y = d.depth * 100});
+	nodes.forEach(function(d){ d.y = d.depth * itemWidth});
 
 
 	// ****************** Nodes section ***************************
@@ -75,13 +106,11 @@ const update = function (source) {
 	// Add labels for the nodes
 	nodeEnter.append('text')
 		.attr("dy", ".35em")
-		.attr("x", function(d) {
-			return d.children || d._children ? -13 : 13;
-		})
 		.attr("text-anchor", function(d) {
 			return d.children || d._children ? "end" : "start";
 		})
-		.text(function(d) { return d.data.name; });
+		.text(function(d) { return d.data.name; })
+		.call(wrap, itemWidth - 30);
 
 	// UPDATE
 	var nodeUpdate = nodeEnter.merge(node);
@@ -225,7 +254,16 @@ class ComparisonGraph extends Component {
 	}
 
 	render() {
-		return <svg id="vis" />;
+		return (
+			<svg id="vis">
+				<defs>
+					<filter x="0" y="0" width="1" height="1" id="solid">
+						<feFlood floodColor="white" />
+						<feComposite in="SourceGraphic" operator="xor" />
+					</filter>
+				</defs>
+			</svg>
+		);
 	}
 }
 

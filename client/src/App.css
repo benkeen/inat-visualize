@@ -34,12 +34,11 @@ form {
 .node circle {
      fill: #ffffff;
      stroke: steelblue;
-     stroke-width: 3px;
+     stroke-width: 2px;
 }
 
 .node text {
     font: 11px sans-serif;
-/*    fill: #ffffff; */
 }
 
 .link {
